@@ -1,7 +1,7 @@
 {
   "name": "gulp-require-file",
   "version": "1.0.0",
-  "description": "Require files like in Sprockets",
+  "description": "Require source files with directives similar to Sprockets",
   "main": "index.js",
   "keywords": [
     "gulpplugin"
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "event-stream": "~3.3.0",
-    "glob": "^5.0.5",
+    "glob": "~5.0.5",
     "gulp-util": "~3.0.4"
   }
 }

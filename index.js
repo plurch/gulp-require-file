@@ -6,16 +6,7 @@ var fs = require('fs'),
 
 var DIRECTIVE_REGEX = /\s*?\/\/=\s*?require(_tree|_directory)? (.*)/;
 
-var extensions = [];
-
 module.exports = function (params) {
-    params = params || {};
-    var extensions = [];
-
-    if (params.extensions) {
-        extensions = typeof params.extensions === 'string' ? [params.extensions] : params.extensions;
-    }
-
     function include(file, callback) {
         if (file.isNull()) {
             return callback(null, file);
@@ -36,8 +27,8 @@ module.exports = function (params) {
     return es.map(include);
 };
 
+// Expands a file by recursively processing any require directives that it contains. Returns a string
 function expand(filePath, requiredFiles) {
-    debugger;
     requiredFiles = requiredFiles || {};
 
     if(requiredFiles[filePath]) return ''; // just return if already required
@@ -45,12 +36,13 @@ function expand(filePath, requiredFiles) {
     requiredFiles[filePath] = true;
 
     var result = '';
-
     var lines = String(fs.readFileSync(filePath)).split(/\n/);
 
     lines.forEach(function(line) {
-        if(DIRECTIVE_REGEX.test(line)) {
-            var dirFiles = getFiles(filePath, line);
+        var match = line.match(DIRECTIVE_REGEX);
+
+        if(match) {
+            var dirFiles = getFiles(filePath, match);
 
             dirFiles.forEach(function(dirFile) {
                 result = result + expand(dirFile, requiredFiles) + "\n";
@@ -64,24 +56,27 @@ function expand(filePath, requiredFiles) {
     return result;
 }
 
-function getFiles(filePath, line) {
-    // support single file, directory, or tree ...
-    var res = line.match(DIRECTIVE_REGEX);
-
+// Returns an array of absolute file paths matching the directive
+function getFiles(filePath, match) {
     var baseDir = path.dirname(filePath);
-    var directivePath = res[2];
+    var fileExt = path.extname(filePath);
+    var directiveType = match[1];
+    var directivePath = match[2];
+    var relPath;
 
-    var relPath = directivePath;
-
-    switch(res[1]) {
+    switch(directiveType) {
         case '_directory':
-            relPath = path.join(directivePath, '/*');
+            relPath = path.join(directivePath, '/*' + fileExt);
             break;
 
         case '_tree':
-            relPath = path.join(directivePath, '**/*');
+            relPath = path.join(directivePath, '**/*' + fileExt);
             break;
+
+        default:
+            relPath = path.extname(directivePath) ? directivePath : directivePath + fileExt;
+
     }
 
-    return glob.sync(path.join(baseDir, relPath));
+    return glob.sync(path.join(baseDir, relPath), {nodir: true});
 }
