@@ -1,0 +1,21 @@
+{
+  "name": "gulp-require-file",
+  "version": "1.0.0",
+  "description": "Require files like in Sprockets",
+  "main": "index.js",
+  "keywords": [
+    "gulpplugin"
+  ],
+  "author": {
+    "name": "Rocket Fuel Inc."
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "~3.8.11"
+  },
+  "dependencies": {
+    "event-stream": "~3.3.0",
+    "glob": "^5.0.5",
+    "gulp-util": "~3.0.4"
+  }
+}
