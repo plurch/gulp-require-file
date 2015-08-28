@@ -5,6 +5,7 @@ var fs = require('fs'),
     glob = require('glob');
 
 var DIRECTIVE_REGEX = /\s*?\/\/=\s*?require(_tree|_directory)? (.*)/;
+var globOptions;
 
 module.exports = function (params) {
     function include(file, callback) {
@@ -17,6 +18,8 @@ module.exports = function (params) {
         }
 
         if (file.isBuffer()) {
+            globOptions = params.globOptions || {};
+            globOptions.nodir = true;
             var newText = expand(file.path);
             file.contents = new Buffer(newText);
         }
@@ -74,9 +77,10 @@ function getFiles(filePath, match) {
             break;
 
         default:
-            relPath = path.extname(directivePath) ? directivePath : directivePath + fileExt;
+            // Add extension of containing file if not already there
+            relPath = path.extname(directivePath) == fileExt ? directivePath : directivePath + fileExt;
 
     }
 
-    return glob.sync(path.join(baseDir, relPath), {nodir: true});
+    return glob.sync(path.join(baseDir, relPath), globOptions);
 }

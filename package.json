@@ -1,6 +1,6 @@
 {
   "name": "gulp-require-file",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Require source files with directives similar to Sprockets",
   "main": "index.js",
   "keywords": [
@@ -9,11 +9,18 @@
   "author": {
     "name": "Rocket Fuel Inc."
   },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/plurch/gulp-require-file.git"
+  },
   "license": "MIT",
   "devDependencies": {
-    "chai": "^2.2.0",
+    "chai": "~2.2.0",
     "gulp": "~3.8.11",
-    "mocha": "^2.2.4"
+    "mocha": "~2.2.4"
   },
   "dependencies": {
     "event-stream": "~3.3.0",

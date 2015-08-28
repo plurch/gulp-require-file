@@ -12,10 +12,11 @@ function buildTestFile(fileName) {
   });
 }
 
-function testByFile(fileName, done) {
+function testByFile(fileName, done, opts) {
+  opts = opts || {};
   var file = buildTestFile(fileName);
 
-  testRequireFile = requireFile();
+  testRequireFile = requireFile(opts);
   testRequireFile.on("data", function (newFile) {
     expect(newFile).to.exist;
     expect(newFile.contents).to.exist;
@@ -39,6 +40,14 @@ describe('gulp-require-file', function(){
 
     it("should require a tree of source files", function (done) {
       testByFile('app_tree.js', done);
+    });
+
+    it("should process a nested structure of source files", function (done) {
+      testByFile('app_recursive.js', done);
+    });
+
+    it("should ignore files based on glob pattern", function (done) {
+      testByFile('app_ignore.js', done, {globOptions: {ignore: '**/b.js'}});
     });
   })
 });
