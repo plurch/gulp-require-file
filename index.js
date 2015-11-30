@@ -2,13 +2,20 @@ var fs = require('fs'),
     path = require('path'),
     es = require('event-stream'),
     gutil = require('gulp-util'),
-    glob = require('glob');
+    glob = require('glob'),
+    applySourceMap = require('vinyl-sourcemaps-apply'),
+    lineConcat = require('./lib/line_concat');
 
 var DIRECTIVE_REGEX = /\s*?\/\/=\s*?require(_tree|_directory)? (.*)/;
 var globOptions;
 
-module.exports = function (params) {
+module.exports = function (options) {
     function include(file, callback) {
+        options = options || {};
+        if (file.sourceMap) {
+            options.makeSourceMaps = true;
+        }
+
         if (file.isNull()) {
             return callback(null, file);
         }
@@ -18,10 +25,18 @@ module.exports = function (params) {
         }
 
         if (file.isBuffer()) {
-            globOptions = params.globOptions || {};
+            globOptions = options.globOptions || {};
             globOptions.nodir = true;
-            var newText = expand(file.path);
-            file.contents = new Buffer(newText);
+            this.lineConcat = new lineConcat(true, file.path, '\n');
+            expand(file.path, null, options);
+            file.contents = this.lineConcat.content;
+            if (options.makeSourceMaps) {
+              file.sourceMap = this.lineConcat.sourceMap;
+            }
+        }
+
+        if (options.makeSourceMaps) {
+            applySourceMap(file, file.sourceMap);
         }
 
         callback(null, file);
@@ -34,29 +49,30 @@ module.exports = function (params) {
 function expand(filePath, requiredFiles) {
     requiredFiles = requiredFiles || {};
 
-    if(requiredFiles[filePath]) return ''; // just return if already required
+    if(requiredFiles[filePath]) {
+        this.lineConcat.add(filePath, '', null, 0);
+        return;
+    } // just return if already required
 
     requiredFiles[filePath] = true;
 
-    var result = '';
     var lines = String(fs.readFileSync(filePath)).split(/\n/);
 
-    lines.forEach(function(line) {
+    lines.forEach(function(line, index) {
         var match = line.match(DIRECTIVE_REGEX);
 
         if(match) {
             var dirFiles = getFiles(filePath, match);
 
             dirFiles.forEach(function(dirFile) {
-                result = result + expand(dirFile, requiredFiles) + "\n";
+                expand(dirFile, requiredFiles);
             });
         }
         else {
-            result = result + line + "\n";
+            this.lineConcat.add(filePath, line, null, index);
         }
     });
-
-    return result;
+    this.lineConcat.add(filePath, '', null, lines.length);
 }
 
 // Returns an array of absolute file paths matching the directive
